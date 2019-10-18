@@ -1,0 +1,6 @@
+template_path: codebuild-demo.yaml
+
+parameters:
+  CodeBuildProjectName: "project-x"
+  PipelineSharedArtifactBucketName:
+    !stack_output pipeline-shared.yaml::PipelineSharedArtifactBucketName

@@ -1,0 +1,98 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deployment Pipeline Shared Resources
+Parameters:
+
+  Identifier:
+    Description: Used for bucket naming
+    Type: String
+
+Mappings:
+  Region:
+    us-east-1:
+      RegionName: virginia
+    us-west-1:
+      RegionName: california
+    us-west-2:
+      RegionName: oregon
+    eu-west-1:
+      RegionName: ireland
+    eu-west-2:
+      RegionName: london
+    eu-central-1:
+      RegionName: frankfurt
+    ap-northeast-1:
+      RegionName: japan
+    ap-southeast-1:
+      RegionName: singapore
+    ap-southeast-2:
+      RegionName: sydney
+    sa-east-1:
+      RegionName: brazil
+    ap-south-1:
+      RegionName: mumbai
+
+  SuffixRegion:
+    us-east-2:
+      RegionCommonName: 'ohio'
+    us-east-1:
+      RegionCommonName: 'nvirginia'
+    us-west-1:
+      RegionCommonName: 'ncalifornia'
+    us-west-2:
+      RegionCommonName: 'oregon'
+    ap-northeast-1:
+      RegionCommonName: 'tokyo'
+    ap-northeast-2:
+      RegionCommonName: 'seoul'
+    ap-south-1:
+      RegionCommonName: 'mumbai'
+    ap-southeast-1:
+      RegionCommonName: 'singapore'
+    ap-southeast-2:
+      RegionCommonName: 'sydney'
+    ca-central-1:
+      RegionCommonName: 'canada'
+    cn-north-1:
+      RegionCommonName: 'beijing'
+    cn-northwest-1:
+      RegionCommonName: 'ningxia'
+    eu-central-1:
+      RegionCommonName: 'frankfurt'
+    eu-west-1:
+      RegionCommonName: 'ireland'
+    eu-west-2:
+      RegionCommonName: 'london'
+    eu-west-3:
+      RegionCommonName: 'paris'
+    sa-east-1:
+      RegionCommonName: 'saopaulo'
+
+Resources:
+
+  PipelineSharedArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      BucketName: !Join
+          - '-'
+          - - pipeline-shared
+            - !Ref Identifier
+            - !FindInMap [SuffixRegion, !Ref "AWS::Region", RegionCommonName]
+            - !Ref AWS::AccountId
+      VersioningConfiguration:
+        Status: Enabled
+
+Outputs:
+
+  PipelineSharedArtifactBucketName:
+    Value: !Ref PipelineSharedArtifactBucket
+    Description: 'The Name of the bucket for Artifacts'
+
+  PipelineSharedArtifactBucketArn:
+    Value: !GetAtt PipelineSharedArtifactBucket.Arn
+    Description: 'The ARN of the bucket for Artifacts'

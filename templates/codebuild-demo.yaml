@@ -1,0 +1,71 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+
+  CodeBuildProjectName:
+    Type: String
+    MinLength: 3
+    MaxLength: 12
+    Description: Name to Identify the CodeBuild Project
+
+  PipelineSharedArtifactBucketName:
+    Type: String
+    Description: S3 bucket name to store pipeline and build artefacts
+
+Resources:
+
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${CodeBuildProjectName}-build
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:2.0
+      Source:
+        Type: CODEPIPELINE
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - codebuild.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Resource: "*"
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+          - Resource: !Sub 'arn:aws:s3:::${PipelineSharedArtifactBucketName}/*'
+            Effect: Allow
+            Action:
+              - s3:List*
+              - s3:GetObject
+              - s3:PutObject
+              - s3:GetObjectVersion
+          - Effect: Allow
+            Action:
+              - ssm:Get*
+            Resource: "*"
+
+Outputs:
+
+  CodeBuildProjectName:
+    Value: !Ref BuildProject
+    Description: 'The Name of the CodeBuild project'

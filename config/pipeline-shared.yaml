@@ -1,0 +1,4 @@
+template_path: pipeline-shared.yaml
+
+parameters:
+  Identifier: "demo"

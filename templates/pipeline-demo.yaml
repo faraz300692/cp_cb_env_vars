@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+
+  GitHubUser:
+    Type: String
+    Description: GitHub User
+
+  GitHubRepo:
+    Type: String
+    Description: GitHub Repo
+
+  GitHubBranch:
+    Type: String
+    Description: GitHub Branch
+
+  GitHubToken:
+    Type: String
+    Description: GitHub OAuthToken
+    NoEcho: true
+
+  PipelineSharedArtifactBucketName:
+    Type: String
+    Description: S3 bucket name to store pipeline artefacts
+
+  CodeBuildProjectName:
+    Type: String
+    Description: Project Name to run the build job in this pipeline
+
+  PlainTextVarValue:
+    Type: String
+    Description: Value for the plain text variable to pass to CodeBuild
+
+  SsmParameterStoreKey:
+    Type: "AWS::SSM::Parameter::Name"
+    Description: Key to the SSM Parameter Store Parameter to pass to CodeBuild
+
+Resources:
+
+  DeploymentPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub ${AWS::StackName}
+      RoleArn: !GetAtt RoleCodePipeline.Arn
+      RestartExecutionOnUpdate: false
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineSharedArtifactBucketName
+      Stages:
+      - Name: SourceGitHub
+        Actions:
+        - Name: Source
+          ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Version: 1
+            Provider: GitHub
+          Configuration:
+            Owner: !Ref GitHubUser
+            Repo: !Ref GitHubRepo
+            Branch: !Ref GitHubBranch
+            OAuthToken: !Ref GitHubToken
+            PollForSourceChanges: true
+          OutputArtifacts:
+          - Name: SourceArtifact
+          RunOrder: 1
+      - Name: build-stage
+        Actions:
+        - Name: build-action
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Version: 1
+            Provider: CodeBuild
+          Configuration:
+            ProjectName: !Ref CodeBuildProjectName
+            EnvironmentVariables: !Sub '[{"name":"MY_VARIABLE","value":"${PlainTextVarValue}","type":"PLAINTEXT"},{"name":"MY_SSM_PARAM","value":"${SsmParameterStoreKey}","type":"PARAMETER_STORE"}]'
+          InputArtifacts:
+          - Name: SourceArtifact
+          OutputArtifacts: []
+          RunOrder: 1
+
+  RoleCodePipeline:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - codepipeline.amazonaws.com
+        Version: '2012-10-17'
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Resource: !Sub 'arn:aws:s3:::${PipelineSharedArtifactBucketName}'
+              Effect: Allow
+              Action:
+                - s3:List*
+                - s3:Get*
+                - s3:Put*
+                - s3:Delete*
+            - Resource: !Sub 'arn:aws:s3:::${PipelineSharedArtifactBucketName}/*'
+              Effect: Allow
+              Action:
+                - s3:List*
+                - s3:Get*
+                - s3:Put*
+                - s3:Delete*
+            - Resource: "*"
+              Effect: Allow
+              Action:
+                - codebuild:*
+            - Resource: "*"
+              Effect: Allow
+              Action:
+              - logs:Describe*
+              - logs:Create*
+              - logs:Put*

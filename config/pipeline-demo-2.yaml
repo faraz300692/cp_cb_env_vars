@@ -1,0 +1,14 @@
+template_path: pipeline-demo.yaml
+
+parameters:
+  GitHubUser: "REPLACE_WITH_YOUR_GITHUB_ACCOUNT"
+  GitHubRepo: "cp_cb_env_vars"
+  GitHubBranch: "master"
+  GitHubToken:
+    !ssm "/github/auth/token" # Create this ssm parameter with your GitHub token
+  PipelineSharedArtifactBucketName:
+    !stack_output pipeline-shared.yaml::PipelineSharedArtifactBucketName
+  CodeBuildProjectName:
+    !stack_output codebuild-demo-project.yaml::CodeBuildProjectName
+  PlainTextVarValue: "var_value_2"
+  SsmParameterStoreKey: "/demo/secret/pipeline-2"

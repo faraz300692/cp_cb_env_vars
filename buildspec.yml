@@ -1,0 +1,11 @@
+---
+version: 0.2
+#AWS CodeBuild
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+    commands:
+      - echo "Build run initiated by $CODEBUILD_INITIATOR." # Whatever CodePipeline calls this CodeBuild Project
+      - echo "MY_VARIABLE value is $MY_VARIABLE." # Whatever value CodePipeline sets to env var MY_VARIABLE
+      - echo "MY VALUE FROM SSM PARAMETER STORE value is $MY_SSM_PARAM." # whatever value SSM Parameter Store has for key MY_SSM_PARAM set by CodePipeline
