@@ -8,6 +8,6 @@ The project is defined as infrastructure-as-code (IaC) leveraging AWS Cloudforma
 
 In order to interact with this project through Sceptre, the following tools must be installed on a unix based environment.
 
-pip install awscli
-pip install sceptre
-pip install sceptre-ssm-resolver
+```
+pip install awscli sceptre sceptre-ssm-resolver
+```
